@@ -1,4 +1,4 @@
-import { createElement, useState } from "react";
+import { createElement, useCallback, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 
 import getRandomColor from "./utils/getRandomColor";
@@ -29,6 +29,97 @@ export default function App() {
   const [items, setItems] = useState(initialItems);
   const [selectedIds, setSelectedIds] = useState(new Set<number>());
 
+  const ctrlPressedRef = useRef(false);
+  const shiftPressedRef = useRef(false);
+
+  const groupSelectedElements = useCallback(() => {
+    if (selectedIds.size < 2) return;
+
+    const groupId = Date.now();
+    const childIds = Array.from(selectedIds);
+
+    const groupItem: Item = {
+      id: groupId,
+      type: "group",
+      children: childIds,
+      color: getRandomColor(),
+      style: {
+        position: "absolute",
+        backgroundColor: "rgba(0, 0, 0, 0.1)",
+        border: "2px dashed gray",
+      },
+    };
+
+    setItems((prev) => {
+      const updatedItems = prev.map((item) => {
+        if (childIds.includes(item.id)) {
+          return {
+            ...item,
+            parent: groupId,
+            style: {
+              ...item.style,
+              position: "absolute" as React.CSSProperties["position"], // 그룹 내부에서 상대 위치
+            },
+          };
+        }
+        return item;
+      });
+
+      return [...updatedItems, groupItem];
+    });
+
+    setSelectedIds(new Set([groupId]));
+  }, [selectedIds]);
+
+  const unGroupSelectedElements = useCallback(() => {
+    setItems((prev) => {
+      let newItems = [...prev];
+      const groups = newItems.filter((item) => item.type === "group" && selectedIds.has(item.id));
+
+      groups.forEach((group) => {
+        if (group.children && group.children.length > 0) {
+          newItems = newItems.map((item) => {
+            if (group.children?.includes(item.id)) {
+              return { ...item, parent: undefined };
+            }
+            return item;
+          });
+          newItems = newItems.filter((i) => i.id !== group.id);
+        }
+      });
+
+      return newItems;
+    });
+  }, [selectedIds]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Shift") shiftPressedRef.current = true;
+      if (e.key === "Control") ctrlPressedRef.current = true;
+
+      if (ctrlPressedRef.current && e.code === "KeyG" && !shiftPressedRef.current) {
+        groupSelectedElements();
+      }
+
+      if (ctrlPressedRef.current && shiftPressedRef.current && e.code === "KeyG") {
+        unGroupSelectedElements();
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Shift") shiftPressedRef.current = false;
+      if (e.key === "Control") ctrlPressedRef.current = false;
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [groupSelectedElements, unGroupSelectedElements]);
+
   const handleAdd = (tag: ElementType) => {
     const newItem: Item = { id: Date.now(), type: tag, color: getRandomColor() };
     setItems((prev) => [...prev, newItem]);
@@ -36,12 +127,70 @@ export default function App() {
 
   const handleSelect = (e: React.MouseEvent, itemId: number) => {
     e.preventDefault();
-    setSelectedIds(() => {
-      return new Set([itemId]);
+    const isShift = e.shiftKey;
+
+    setSelectedIds((prev) => {
+      if (!isShift) {
+        return new Set([itemId]);
+      }
+
+      const newSelection = new Set(prev);
+      if (newSelection.has(itemId)) {
+        newSelection.delete(itemId);
+      } else {
+        newSelection.add(itemId);
+      }
+      return newSelection;
     });
   };
 
   const isSelected = (id: number) => selectedIds.has(id);
+
+  const renderItemTree = (item: Item) => {
+    const selected = isSelected(item.id);
+
+    if (item.type === "group") {
+      const childrenItems = items.filter((i) => i.parent === item.id);
+      return (
+        <ViewPortItem
+          key={item.id}
+          onClick={(e) => handleSelect(e, item.id)}
+          $color={item.color}
+          $isSelected={selected}
+          style={{
+            ...item.style,
+            display: "flex",
+            position: "relative",
+            alignItems: "start",
+            justifyContent: "start",
+          }}>
+          <span id="group-title">Group</span>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "nowrap",
+              position: "relative",
+              width: "100%",
+              height: "100%",
+            }}>
+            {childrenItems.map((child) => renderItemTree(child))}
+          </div>
+        </ViewPortItem>
+      );
+    } else {
+      return (
+        <ViewPortItem
+          key={item.id}
+          onClick={(e) => handleSelect(e, item.id)}
+          $color={item.color}
+          $isSelected={selected}>
+          {createElement(item.type, null, item.type)}
+        </ViewPortItem>
+      );
+    }
+  };
+
+  const topLevelItems = items.filter((i) => i.parent === undefined);
 
   return (
     <Container>
@@ -69,13 +218,7 @@ export default function App() {
           ))}
         </div>
       </LayPanel>
-      <ViewPort>
-        {items.map((item) => (
-          <ViewPortItem onClick={(e) => handleSelect(e, item.id)} $isSelected={isSelected(item.id)} $color={item.color}>
-            {createElement(item.type, null, item.type)}
-          </ViewPortItem>
-        ))}
-      </ViewPort>
+      <ViewPort>{topLevelItems.map((item) => renderItemTree(item))}</ViewPort>
     </Container>
   );
 }
@@ -141,8 +284,6 @@ const ViewPortItem = styled.div<{ $color: string; $isSelected: boolean }>`
   background-color: ${(props) => props.$color};
   border: ${(props) => (props.$isSelected ? "2px pink solid" : "none")};
   display: flex;
-  align-items: center;
-  justify-content: center;
   position: relative;
   cursor: pointer;
 
