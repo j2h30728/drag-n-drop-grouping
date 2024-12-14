@@ -28,6 +28,8 @@ const initialItems: Item[] = [
 export default function App() {
   const [items, setItems] = useState(initialItems);
   const [selectedIds, setSelectedIds] = useState(new Set<number>());
+  const [isAllVertically, setIsAllVertically] = useState(true);
+  const [isGroupVertically, setIsGroupVertically] = useState(true);
 
   const ctrlPressedRef = useRef(false);
   const shiftPressedRef = useRef(false);
@@ -120,6 +122,19 @@ export default function App() {
     };
   }, [groupSelectedElements, unGroupSelectedElements]);
 
+  const handleChangeVertically = () => {
+    setIsAllVertically(true);
+  };
+  const handleChangeHorizontally = () => {
+    setIsAllVertically(false);
+  };
+  const handleChangeGroupVertically = () => {
+    setIsGroupVertically(true);
+  };
+  const handleChangeGroupHorizontally = () => {
+    setIsGroupVertically(false);
+  };
+
   const handleAdd = (tag: ElementType) => {
     const newItem: Item = { id: Date.now(), type: tag, color: getRandomColor() };
     setItems((prev) => [...prev, newItem]);
@@ -169,6 +184,7 @@ export default function App() {
             style={{
               display: "flex",
               flexWrap: "nowrap",
+              flexDirection: isGroupVertically ? "row" : "column",
               position: "relative",
               width: "100%",
               height: "100%",
@@ -197,10 +213,10 @@ export default function App() {
       <LayPanel>
         <SectionContainer>
           <h3>Align</h3>
-          <button>All Vertically</button>
-          <button>All Horizontally</button>
-          <button>Group Vertically</button>
-          <button>Group Horizontally</button>
+          <button onClick={handleChangeVertically}>All Vertically</button>
+          <button onClick={handleChangeHorizontally}>All Horizontally</button>
+          <button onClick={handleChangeGroupVertically}>Group Vertically</button>
+          <button onClick={handleChangeGroupHorizontally}>Group Horizontally</button>
         </SectionContainer>
         <SectionContainer>
           <h3>Add</h3>
@@ -218,7 +234,7 @@ export default function App() {
           ))}
         </div>
       </LayPanel>
-      <ViewPort>{topLevelItems.map((item) => renderItemTree(item))}</ViewPort>
+      <ViewPort $isAllVertically={isAllVertically}>{topLevelItems.map((item) => renderItemTree(item))}</ViewPort>{" "}
     </Container>
   );
 }
@@ -272,9 +288,10 @@ const PanelItem = styled.div<{ $isSelected: boolean }>`
   cursor: pointer;
 `;
 
-const ViewPort = styled.main`
+const ViewPort = styled.main<{ $isAllVertically: boolean }>`
   display: flex;
   flex-wrap: wrap;
+  flex-direction: ${(props) => (props.$isAllVertically ? "row" : "column")};
   position: relative;
 `;
 
