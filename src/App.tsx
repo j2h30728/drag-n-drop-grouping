@@ -4,6 +4,8 @@ import styled from "styled-components";
 import { useItemsStore, useSelectionStore } from "./store";
 import LayPanel from "./components/LayPanel";
 import ViewPort from "./components/ViewPort";
+import useDownloadSvgImage from "./hooks/useDownloadSvgImage";
+import SVGButton from "./components/SVGButton";
 
 const App = () => {
   const groupSelectedElements = useItemsStore((state) => state.groupSelectedElements);
@@ -12,6 +14,12 @@ const App = () => {
 
   const ctrlPressedRef = useRef(false);
   const shiftPressedRef = useRef(false);
+
+  const viewPortRef = useRef<HTMLDivElement>(null);
+
+  const { downloadSvgImage } = useDownloadSvgImage(viewPortRef, {
+    filename: "viewport",
+  });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -23,8 +31,6 @@ const App = () => {
       }
 
       if (ctrlPressedRef.current && shiftPressedRef.current && e.code === "KeyG") {
-        console.log(selectedIds);
-
         unGroupSelectedElements(selectedIds);
       }
     };
@@ -46,7 +52,10 @@ const App = () => {
   return (
     <Container>
       <LayPanel />
-      <ViewPort />
+      <section>
+        <SVGButton onDownload={downloadSvgImage} />
+        <ViewPort ref={viewPortRef} />
+      </section>
     </Container>
   );
 };
@@ -57,4 +66,8 @@ const Container = styled.div`
   width: 100%;
   display: flex;
   gap: 10px;
+
+  section {
+    width: 100%;
+  }
 `;
