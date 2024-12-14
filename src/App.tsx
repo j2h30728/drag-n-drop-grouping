@@ -27,11 +27,21 @@ const initialItems: Item[] = [
 
 export default function App() {
   const [items, setItems] = useState(initialItems);
+  const [selectedIds, setSelectedIds] = useState(new Set<number>());
 
   const handleAdd = (tag: ElementType) => {
     const newItem: Item = { id: Date.now(), type: tag, color: getRandomColor() };
     setItems((prev) => [...prev, newItem]);
   };
+
+  const handleSelect = (e: React.MouseEvent, itemId: number) => {
+    e.preventDefault();
+    setSelectedIds(() => {
+      return new Set([itemId]);
+    });
+  };
+
+  const isSelected = (id: number) => selectedIds.has(id);
 
   return (
     <Container>
@@ -53,7 +63,7 @@ export default function App() {
         </SectionContainer>
         <div>
           {items.map((item) => (
-            <PanelItem key={item.id} draggable>
+            <PanelItem key={item.id} onClick={(e) => handleSelect(e, item.id)} $isSelected={isSelected(item.id)}>
               {item.type}
             </PanelItem>
           ))}
@@ -61,7 +71,9 @@ export default function App() {
       </LayPanel>
       <ViewPort>
         {items.map((item) => (
-          <ViewPortItem $color={item.color}>{createElement(item.type, null, item.type)}</ViewPortItem>
+          <ViewPortItem onClick={(e) => handleSelect(e, item.id)} $isSelected={isSelected(item.id)} $color={item.color}>
+            {createElement(item.type, null, item.type)}
+          </ViewPortItem>
         ))}
       </ViewPort>
     </Container>
@@ -107,8 +119,9 @@ const SectionContainer = styled.div`
   }
 `;
 
-const PanelItem = styled.div`
+const PanelItem = styled.div<{ $isSelected: boolean }>`
   width: 100%;
+  border: ${(props) => (props.$isSelected ? "2px pink solid" : "none")};
   padding: 2px;
   margin-bottom: 3px;
   text-align: left;
@@ -122,13 +135,21 @@ const ViewPort = styled.main`
   position: relative;
 `;
 
-const ViewPortItem = styled.div<{ $color: string }>`
+const ViewPortItem = styled.div<{ $color: string; $isSelected: boolean }>`
   width: 100px;
   height: 200px;
   background-color: ${(props) => props.$color};
+  border: ${(props) => (props.$isSelected ? "2px pink solid" : "none")};
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   cursor: pointer;
+
+  #group-title {
+    position: absolute;
+    z-index: 10;
+    font-weight: 600;
+    color: pink;
+  }
 `;
