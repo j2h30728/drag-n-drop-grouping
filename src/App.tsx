@@ -30,6 +30,7 @@ export default function App() {
   const [selectedIds, setSelectedIds] = useState(new Set<number>());
   const [isAllVertically, setIsAllVertically] = useState(true);
   const [isGroupVertically, setIsGroupVertically] = useState(true);
+  const [draggedId, setDraggedId] = useState<number | null>(null);
 
   const ctrlPressedRef = useRef(false);
   const shiftPressedRef = useRef(false);
@@ -140,6 +141,31 @@ export default function App() {
     setItems((prev) => [...prev, newItem]);
   };
 
+  const handleDragStart = (id: number) => {
+    setDraggedId(id);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (id: number) => {
+    if (draggedId === null) return;
+
+    setItems((prev) => {
+      const draggedIndex = prev.findIndex((item) => item.id === draggedId);
+      const dropIndex = prev.findIndex((item) => item.id === id);
+
+      const updatedItems = [...prev];
+      const [draggedItem] = updatedItems.splice(draggedIndex, 1);
+      updatedItems.splice(dropIndex, 0, draggedItem);
+
+      return updatedItems;
+    });
+
+    setDraggedId(null);
+  };
+
   const handleSelect = (e: React.MouseEvent, itemId: number) => {
     e.preventDefault();
     const isShift = e.shiftKey;
@@ -169,6 +195,10 @@ export default function App() {
       return (
         <ViewPortItem
           key={item.id}
+          draggable
+          onDragStart={() => handleDragStart(item.id)}
+          onDragOver={handleDragOver}
+          onDrop={() => handleDrop(item.id)}
           onClick={(e) => handleSelect(e, item.id)}
           $color={item.color}
           $isSelected={selected}
@@ -197,6 +227,10 @@ export default function App() {
       return (
         <ViewPortItem
           key={item.id}
+          draggable
+          onDragStart={() => handleDragStart(item.id)}
+          onDragOver={handleDragOver}
+          onDrop={() => handleDrop(item.id)}
           onClick={(e) => handleSelect(e, item.id)}
           $color={item.color}
           $isSelected={selected}>
@@ -228,7 +262,14 @@ export default function App() {
         </SectionContainer>
         <div>
           {items.map((item) => (
-            <PanelItem key={item.id} onClick={(e) => handleSelect(e, item.id)} $isSelected={isSelected(item.id)}>
+            <PanelItem
+              key={item.id}
+              draggable
+              onDragStart={() => handleDragStart(item.id)}
+              onDragOver={handleDragOver}
+              onDrop={() => handleDrop(item.id)}
+              $isSelected={isSelected(item.id)}
+              onClick={(e) => handleSelect(e, item.id)}>
               {item.type}
             </PanelItem>
           ))}
