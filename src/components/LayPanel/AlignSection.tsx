@@ -1,15 +1,20 @@
 import styled from "styled-components";
 
-import { useLayoutStore } from "../../store";
+import { useLayoutStore, useSelectionStore } from "../../store";
 
 const AlignSection = () => {
   const setIsAllVertically = useLayoutStore((state) => state.setIsAllVertically);
-  const setIsGroupVertically = useLayoutStore((state) => state.setIsGroupVertically);
+  const setIsGroupVertically = useLayoutStore((state) => state.setGroupAlignState);
+  const selectionIds = useSelectionStore((state) => state.selectedIds);
 
   const handleChangeVertically = () => setIsAllVertically(true);
   const handleChangeHorizontally = () => setIsAllVertically(false);
-  const handleChangeGroupVertically = () => setIsGroupVertically(true);
-  const handleChangeGroupHorizontally = () => setIsGroupVertically(false);
+  const handleChangeGroupVertically = () => {
+    selectionIds.forEach((id) => setIsGroupVertically(id, "raw"));
+  };
+  const handleChangeGroupHorizontally = () => {
+    selectionIds.forEach((id) => setIsGroupVertically(id, "column"));
+  };
 
   return (
     <SectionContainer>
