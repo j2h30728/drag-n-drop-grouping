@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Item, ElementType } from "../utils/types";
+import { Item, ElementType, SelectedItem } from "../utils/types";
 import getRandomColor from "../utils/getRandomColor";
 
 interface ItemsState {
@@ -9,8 +9,8 @@ interface ItemsState {
   dragStart: (id: number) => void;
   dragOver: (e: React.DragEvent) => void;
   drop: (id: number) => void;
-  groupSelectedElements: (selectedIds: Set<number>) => void;
-  unGroupSelectedElements: (selectedIds: Set<number>) => void;
+  groupSelectedElements: (selectedItems: SelectedItem) => Item | undefined;
+  unGroupSelectedElements: (selectedIds: SelectedItem) => Item[];
 }
 
 export const useItemsStore = create<ItemsState>((set, get) => ({
@@ -48,12 +48,11 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
     set({ items: updatedItems, draggedId: null });
   },
-
-  groupSelectedElements: (selectedIds: Set<number>) => {
-    if (selectedIds.size < 2) return;
+  groupSelectedElements: (selectedItems: SelectedItem) => {
+    if (selectedItems.size < 2) return;
 
     const groupId = Date.now();
-    const childIds = Array.from(selectedIds);
+    const childIds = Array.from(selectedItems.keys());
 
     const groupItem: Item = {
       id: groupId,
@@ -66,7 +65,6 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         border: "2px dashed gray",
       },
     };
-
     const updatedItems = get().items.map((item) => {
       if (childIds.includes(item.id)) {
         return {
@@ -84,11 +82,12 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     set({
       items: [...updatedItems, groupItem],
     });
+    return groupItem;
   },
 
-  unGroupSelectedElements: (selectedIds: Set<number>) => {
+  unGroupSelectedElements: (selectedItems: SelectedItem) => {
     let newItems = [...get().items];
-    const groups = newItems.filter((item) => item.type === "group" && selectedIds.has(item.id));
+    const groups = newItems.filter((item) => item.type === "group" && selectedItems.has(item.id));
 
     groups.forEach((group) => {
       if (group.children && group.children.length > 0) {
@@ -103,5 +102,6 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     });
 
     set({ items: newItems });
+    return groups;
   },
 }));

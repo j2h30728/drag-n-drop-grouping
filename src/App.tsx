@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import styled from "styled-components";
 
-import { useItemsStore, useSelectionStore } from "./store";
+import { useItemsStore, useLayoutStore, useSelectionStore } from "./store";
 import LayPanel from "./components/LayPanel";
 import ViewPort from "./components/ViewPort";
 import useDownloadSvgImage from "./hooks/useDownloadSvgImage";
@@ -10,11 +10,11 @@ import SVGButton from "./components/SVGButton";
 const App = () => {
   const groupSelectedElements = useItemsStore((state) => state.groupSelectedElements);
   const unGroupSelectedElements = useItemsStore((state) => state.unGroupSelectedElements);
-  const selectedIds = useSelectionStore((state) => state.selectedIds);
-
+  const selectedItems = useSelectionStore((state) => state.selectedItems);
+  const setGroupAlignState = useLayoutStore((state) => state.setGroupAlignState);
+  const clearGroupAlignState = useLayoutStore((state) => state.clearGroupAlignState);
   const ctrlPressedRef = useRef(false);
   const shiftPressedRef = useRef(false);
-
   const viewPortRef = useRef<HTMLDivElement>(null);
 
   const { downloadSvgImage } = useDownloadSvgImage(viewPortRef, {
@@ -27,11 +27,13 @@ const App = () => {
       if (e.key === "Control") ctrlPressedRef.current = true;
 
       if (ctrlPressedRef.current && e.code === "KeyG" && !shiftPressedRef.current) {
-        groupSelectedElements(selectedIds);
+        const groupItem = groupSelectedElements(selectedItems);
+        if (groupItem) setGroupAlignState(groupItem.id, "raw");
       }
 
       if (ctrlPressedRef.current && shiftPressedRef.current && e.code === "KeyG") {
-        unGroupSelectedElements(selectedIds);
+        const unGroupedItems = unGroupSelectedElements(selectedItems);
+        unGroupedItems.forEach((item) => clearGroupAlignState(item.id));
       }
     };
 
@@ -47,7 +49,7 @@ const App = () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [groupSelectedElements, unGroupSelectedElements, selectedIds]);
+  }, [clearGroupAlignState, groupSelectedElements, selectedItems, setGroupAlignState, unGroupSelectedElements]);
 
   return (
     <Container>

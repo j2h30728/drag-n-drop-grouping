@@ -16,3 +16,5 @@ export interface Item {
   style?: CSSProperties;
   parent?: number;
 }
+
+export type SelectedItem = Map<number, Item>;

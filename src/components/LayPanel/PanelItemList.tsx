@@ -4,13 +4,13 @@ import { useItemsStore, useSelectionStore } from "../../store";
 
 const PanelItemList = () => {
   const items = useItemsStore((state) => state.items);
-  const selectedIds = useSelectionStore((state) => state.selectedIds);
+  const selectedItems = useSelectionStore((state) => state.selectedItems);
   const dragStart = useItemsStore((state) => state.dragStart);
   const dragOver = useItemsStore((state) => state.dragOver);
   const drop = useItemsStore((state) => state.drop);
   const selectItem = useSelectionStore((state) => state.selectItem);
 
-  const isSelected = (id: number) => selectedIds.has(id);
+  const isSelected = (id: number) => selectedItems.has(id);
 
   return (
     <ListContainer>
@@ -22,7 +22,7 @@ const PanelItemList = () => {
           onDragOver={dragOver}
           onDrop={() => drop(item.id)}
           $isSelected={isSelected(item.id)}
-          onClick={(e) => selectItem(e, item.id)}>
+          onClick={(e) => selectItem(e, item)}>
           {item.type}
         </PanelItem>
       ))}

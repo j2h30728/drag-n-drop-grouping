@@ -10,15 +10,16 @@ interface ViewPortItemProps {
 
 const ViewPortItem: React.FC<ViewPortItemProps> = ({ item }) => {
   const { items, dragStart, dragOver, drop } = useItemsStore();
-  const { selectItem, selectedIds } = useSelectionStore();
+  const selectItem = useSelectionStore((state) => state.selectItem);
+  const selectedItems = useSelectionStore((state) => state.selectedItems);
   const groupAlignState = useLayoutStore((state) => state.groupAlignState);
 
-  const isSelected = selectedIds.has(item.id);
+  const isSelected = selectedItems.has(item.id);
 
   const handleDragStart = () => dragStart(item.id);
   const handleDragOver = (e: React.DragEvent) => dragOver(e);
   const handleDrop = () => drop(item.id);
-  const handleClick = (e: React.MouseEvent) => selectItem(e, item.id);
+  const handleClick = (e: React.MouseEvent) => selectItem(e, item);
   if (item.type === "group") {
     const childrenItems = items.filter((i) => i.parent === item.id);
     return (

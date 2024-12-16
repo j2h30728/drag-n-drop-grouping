@@ -6,6 +6,7 @@ interface LayoutState {
   groupAlignState: Record<number, AlignState>;
   setIsAllVertically: (value: boolean) => void;
   setGroupAlignState: (id: number, value: AlignState) => void;
+  clearGroupAlignState: (id: number) => void;
 }
 
 export const useLayoutStore = create<LayoutState>((set) => ({
@@ -20,4 +21,10 @@ export const useLayoutStore = create<LayoutState>((set) => ({
         [id]: value,
       },
     })),
+  clearGroupAlignState: (id: number) =>
+    set((prev) => {
+      const newGroupAlignState = { ...prev.groupAlignState };
+      delete newGroupAlignState[id];
+      return { groupAlignState: newGroupAlignState };
+    }),
 }));

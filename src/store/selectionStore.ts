@@ -1,35 +1,33 @@
 import { create } from "zustand";
+import { Item, SelectedItem } from "../utils/types";
 
 interface SelectionState {
-  selectedIds: Set<number>;
-  selectItem: (e: React.MouseEvent, id: number) => void;
+  selectedItems: SelectedItem;
+  selectItem: (e: React.MouseEvent, id: Item) => void;
   clearSelection: () => void;
-  setSelection: (ids: Set<number>) => void;
 }
 
 export const useSelectionStore = create<SelectionState>((set) => ({
-  selectedIds: new Set<number>(),
+  selectedItems: new Map<number, Item>(),
 
-  selectItem: (e: React.MouseEvent, id: number) => {
+  selectItem: (e: React.MouseEvent, item: Item) => {
     e.preventDefault();
     const isShift = e.shiftKey;
 
     set((state) => {
       if (!isShift) {
-        return { selectedIds: new Set([id]) };
+        return { selectedItems: new Map().set(item.id, item) };
       }
 
-      const newSelection = new Set(state.selectedIds);
-      if (newSelection.has(id)) {
-        newSelection.delete(id);
+      const newSelection = new Map([...state.selectedItems]);
+      if (newSelection.has(item.id)) {
+        newSelection.delete(item.id);
       } else {
-        newSelection.add(id);
+        newSelection.set(item.id, item);
       }
-      return { selectedIds: newSelection };
+      return { selectedItems: newSelection };
     });
   },
 
-  clearSelection: () => set({ selectedIds: new Set<number>() }),
-
-  setSelection: (ids: Set<number>) => set({ selectedIds: ids }),
+  clearSelection: () => set({ selectedItems: new Map<number, Item>() }),
 }));

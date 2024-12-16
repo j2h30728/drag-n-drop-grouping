@@ -5,15 +5,15 @@ import { useLayoutStore, useSelectionStore } from "../../store";
 const AlignSection = () => {
   const setIsAllVertically = useLayoutStore((state) => state.setIsAllVertically);
   const setIsGroupVertically = useLayoutStore((state) => state.setGroupAlignState);
-  const selectionIds = useSelectionStore((state) => state.selectedIds);
+  const selectedItems = useSelectionStore((state) => state.selectedItems);
 
   const handleChangeVertically = () => setIsAllVertically(true);
   const handleChangeHorizontally = () => setIsAllVertically(false);
   const handleChangeGroupVertically = () => {
-    selectionIds.forEach((id) => setIsGroupVertically(id, "raw"));
+    selectedItems.forEach((item) => item.type === "group" && setIsGroupVertically(item.id, "raw"));
   };
   const handleChangeGroupHorizontally = () => {
-    selectionIds.forEach((id) => setIsGroupVertically(id, "column"));
+    selectedItems.forEach((item) => item.type === "group" && setIsGroupVertically(item.id, "column"));
   };
 
   return (
