@@ -11,15 +11,14 @@ interface ViewPortItemProps {
 const ViewPortItem: React.FC<ViewPortItemProps> = ({ item }) => {
   const { items, dragStart, dragOver, drop } = useItemsStore();
   const { selectItem, selectedIds } = useSelectionStore();
-  const isGroupVertically = useLayoutStore((state) => state.isGroupVertically);
+  const groupAlignState = useLayoutStore((state) => state.groupAlignState);
 
-  const selected = selectedIds.has(item.id);
+  const isSelected = selectedIds.has(item.id);
 
   const handleDragStart = () => dragStart(item.id);
   const handleDragOver = (e: React.DragEvent) => dragOver(e);
   const handleDrop = () => drop(item.id);
   const handleClick = (e: React.MouseEvent) => selectItem(e, item.id);
-
   if (item.type === "group") {
     const childrenItems = items.filter((i) => i.parent === item.id);
     return (
@@ -30,9 +29,9 @@ const ViewPortItem: React.FC<ViewPortItemProps> = ({ item }) => {
         onDrop={handleDrop}
         onClick={handleClick}
         $color={item.color}
-        $isSelected={selected}>
+        $isSelected={isSelected}>
         <span id="group-title">Group</span>
-        <ChildrenContainer $isGroupVertically={isGroupVertically}>
+        <ChildrenContainer $groupAlignState={groupAlignState[item.id]}>
           {childrenItems.map((child) => (
             <ViewPortItem key={child.id} item={child} />
           ))}
@@ -48,7 +47,7 @@ const ViewPortItem: React.FC<ViewPortItemProps> = ({ item }) => {
         onDrop={handleDrop}
         onClick={handleClick}
         $color={item.color}
-        $isSelected={selected}>
+        $isSelected={isSelected}>
         {createElement(item.type, null, item.type)}
       </ItemContainer>
     );
@@ -75,10 +74,10 @@ const GroupContainer = styled.div<{ $color: string; $isSelected: boolean }>`
   }
 `;
 
-const ChildrenContainer = styled.div<{ $isGroupVertically: boolean }>`
+const ChildrenContainer = styled.div<{ $groupAlignState?: string }>`
   display: flex;
   flex-wrap: nowrap;
-  flex-direction: ${(props) => (props.$isGroupVertically ? "row" : "column")};
+  flex-direction: ${(props) => props.$groupAlignState ?? "raw"};
   position: relative;
   width: 100%;
   height: 100%;
